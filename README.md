@@ -23,7 +23,7 @@
 - The $-\varepsilon$-attracting basin $A_{F, -\varepsilon}$ denotes the set of which the system underlined by the dynamical system $F$ never escape from the cluster $A$ even if we continue to control it with energy $\varepsilon>0$ *in every time step*.
 - The $\varepsilon_\Sigma$-attracting basin $A_{F, \varepsilon_\Sigma} (\varepsilon\in\mathbb{R})$ denotes the similar set if we control the system with energy $\varepsilon$ *in total*. 
 
-<div style="text-align:left"><img style="width:50%; height: auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/image_eps_attracting_basin.jpg"/></div>
+<div style="text-align:left"><img style="width:100%; height: auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/image_eps_attracting_basin.jpg"/></div>
 
 For more theoretical background, see
 *Filtrations Indexed by Attracting Levels and their Applications*. Yusuke Imoto, Takahito Mitsui, Keita Tokuda, and Tomoo Yokoyama. arXiv**** (2025)
@@ -83,8 +83,9 @@ The functions expect an [AnnData](https://anndata.readthedocs.io/en/stable/) obj
 - **Description:** Visualize the $\varepsilon-$ or $\varepsilon_\Sigma$-attracting basin (tha values on points are the debut function $\underline{\varepsilon}(\ast;A)$ or $\underline{\varepsilon}_{\Sigma}(\ast;A)$) for the target cluster $A$ (indexed by `target_cluster_key`) on a 2D Delaunay triangulation generated from `adata.X` (or `adata.obsm[plot_key]`). Triangles with too large sides or areas can be removed by adjusting the parameters `area_percentile` and `edge_percentile`.
 
 ### Plot attracting basin
-- **Function:** `plot_attracting_basin(adata, eps_key="eps_attracting_basin", cluster_key="cluster", good_cluster_key="good", bad_cluster_key="bad", eps_threshold=0, background=None, fontsize=14, pointsize=20, lon_lim=None, lat_lim=None, show_legend=True, show_label=True, show_ticks=True, show_title=True, title=None, label_clusters=["$G$","$B$"], label_basins=["$G_{F, \\varepsilon}$","$B_{F, \\varepsilon}$"], save_fig=False, save_fig_dir=".", save_fig_name="attracting_basin")`
-- **Description:** Plot the attracting basins of two clusters by highlighting points in “good” or “bad” basins based on ε thresholds on a scatter of longitude/latitude, optionally over a GeoDataFrame background, with legends, labels, and optional trajectory lines per `Member` and `ForecastTime`.
+- **Function:**: `plot_attracting_basin(adata, plot_key=None, eps_key="eps_attracting_basin", cluster_key="cluster", good_cluster_key="good", bad_cluster_key="bad", eps_threshold=0, background=None, fontsize=14, pointsize=20, lon_lim=None, lat_lim=None, show_legend=True, show_label=True, show_ticks=True, show_title=True, title=None, label_clusters=["$G$", "$B$"], label_basins=["$G_{F, \\varepsilon}$", "$B_{F, \\varepsilon}$"], save_fig=False, save_fig_dir=".", save_fig_name="attracting_basin")`
+- **Description:**: Plot the $\varepsilon-$ or $\varepsilon_\Sigma$-attracting basin of good and bad clusters (indexed by `good_cluster_key` anc `bad_cluster_key`) by mapping 2D coordinates from `adata.X` or `adata.obsm[plot_key]`.  
+
 
 
 *For detailed usage, see* `espbasin.py`.
