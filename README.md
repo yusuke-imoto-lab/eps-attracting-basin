@@ -97,7 +97,7 @@ The functions expect an [AnnData](https://anndata.readthedocs.io/en/stable/) obj
 
 <div style="text-align:left"><img style="width:100%; height: auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/example_Dorphin.jpg"/></div>
 
-**a**, Best‐track trajectory (real orbit, blue line) overlaid with all forecast center positions (gray dots) of Drophin. **b**, Selected ensemble forecast tracks at representative initial times. **c**, Clustering and assigning good and bad clusters. **d**, Distribution of $\underline{\varepsilon}$ (top) and $\underline{\varepsilon}_{\Sigma}$ (bottom) for clusters $G$ (reft) and $B$ (right). 
+**a**, Best‐track trajectory (real orbit, blue line) overlaid with all forecast center positions (gray dots) of Drophin. **b**, Selected ensemble forecast tracks at representative initial times. **c**, Clustering and assigning good and bad clusters. **d**, Distribution of debut functions $\underline{\varepsilon}$ (top) and $\underline{\varepsilon}_{\Sigma}$ (bottom) for clusters $G$ (reft) and $B$ (right). 
 
 
 ---
