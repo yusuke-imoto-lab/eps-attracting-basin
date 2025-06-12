@@ -212,7 +212,7 @@ def sublevel_set_visualization(
     eps_key="eps_attracting_basin",
     target_cluster_key="target_cluster",
     linewidth=0.5,
-    color_name="$\\varepsilon$",
+    color_name="_$\\varepsilon$",
     vmin=None,
     vmax=None,
     xlim=None,
@@ -337,8 +337,8 @@ def plot_attracting_basin(
     background=None, 
     fontsize = 14,
     pointsize = 20,
-    lon_lim=None, 
-    lat_lim=None,
+    xlim=None, 
+    ylim=None,
     show_legend=True,
     show_label=True,
     show_ticks=True,
@@ -410,14 +410,14 @@ def plot_attracting_basin(
         ax.add_patch(circ)
 
     # Set axis limits and ticks if not provided
-    if lon_lim is None:
-        lon_lim = ax.get_xlim()
-    if lat_lim is None:
-        lat_lim = ax.get_ylim()
-    xticks = np.arange(np.floor(lon_lim[0] / 2) * 2, np.ceil(lon_lim[1] / 2) * 2 + 1, 2).astype(int)
-    yticks = np.arange(np.floor(lat_lim[0] / 2) * 2, np.ceil(lat_lim[1] / 2) * 2 + 1, 2).astype(int)
-    ax.set_xlim(lon_lim)
-    ax.set_ylim(lat_lim)
+    if xlim is None:
+        xlim = ax.get_xlim()
+    if ylim is None:
+        ylim = ax.get_ylim()
+    xticks = np.arange(np.floor(xlim[0] / 2) * 2, np.ceil(xlim[1] / 2) * 2 + 1, 2).astype(int)
+    yticks = np.arange(np.floor(ylim[0] / 2) * 2, np.ceil(ylim[1] / 2) * 2 + 1, 2).astype(int)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
 
     if show_ticks:
         ax.set_xticks(xticks)
