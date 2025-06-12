@@ -24,7 +24,7 @@
 - The $-\varepsilon$-attracting basin $A_{F, -\varepsilon}$ denotes the set of which the system underlined by the dynamical system $F$ never escape from the cluster $A$ even if we continue to control it with energy $\varepsilon>0$ *in every time step*.
 - The $\varepsilon_\Sigma$-attracting basin $A_{F, \varepsilon_\Sigma} (\varepsilon\in\mathbb{R})$ denotes the similar set if we control the system with energy $\varepsilon$ *in total*. 
 
-<div style="text-align:left"><img style="width:100%; height: auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/image_eps_attracting_basin.jpg"/></div>
+<div style="text-align:left"><img style="width:100%; height: auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/image_eps_attracting_basin.svg"/></div>
 
 For more theoretical background, see
 *Filtrations Indexed by Attracting Levels and their Applications*. Yusuke Imoto, Takahito Mitsui, Keita Tokuda, and Tomoo Yokoyama. arXiv**** (2025)
