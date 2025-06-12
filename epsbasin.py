@@ -12,7 +12,7 @@ import os
 def eps_attracting_basin(
     adata, 
     cluster_key="cluster", 
-    target_cluster_key="target_cluster", 
+    target_cluster_key="good", 
     cost_matrix_key="cost_matrix", 
     output_key="eps_attracting_basin",
     epsilon_delta=0.01
@@ -108,7 +108,7 @@ def eps_attracting_basin(
 def eps_sum_attracting_basin(
     adata, 
     cluster_key="cluster", 
-    target_cluster_key="target_cluster", 
+    target_cluster_key="good", 
     cost_matrix_key="cost_matrix", 
     output_key="eps_sum_attracting_basin",
     epsilon_delta=0.01
@@ -210,13 +210,17 @@ def sublevel_set_visualization(
     adata,
     plot_key=None,
     eps_key="eps_attracting_basin",
-    target_cluster_key="target_cluster",
+    target_cluster_key="good",
     linewidth=0.5,
     color_name="_$\\varepsilon$",
     vmin=None,
     vmax=None,
     xlim=None,
     ylim=None,
+    xlabel = None,
+    ylabel = None,
+    xticks = None,
+    yticks = None,
     show_xticks=True,
     show_yticks=True,
     show_xlabel=True,
@@ -226,6 +230,7 @@ def sublevel_set_visualization(
     show_xticklabels=True,
     show_yticklabels=True,
     figsize=(10, 8),
+    levels = 10,
     area_percentile=99.5,
     edge_percentile=99.5,
     save_fig=False,
@@ -285,7 +290,7 @@ def sublevel_set_visualization(
     norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
     sf = plt.tripcolor(triang, colors, cmap='bwr', norm=norm, alpha=1, lw=0, zorder=10)
     plt.tricontour(points[:, 0], points[:, 1], filtered_simplices, colors,
-                   levels=10, colors='k', linewidths=linewidth, zorder=20)
+                   levels=levels, colors='k', norm=norm, linewidths=linewidth, zorder=20)
     
     cbar = None
     if show_colorbar:
@@ -295,17 +300,19 @@ def sublevel_set_visualization(
             cbar.set_label(color_name, fontsize=22)
         else:
             cbar.set_label("")
-    xticks = np.arange(np.floor(points[:, 0].min()/5) * 5, np.ceil(points[:, 0].max()/5) * 5 + 1, 5).astype(int)
-    yticks = np.arange(np.floor(points[:, 1].min()/5) * 5, np.ceil(points[:, 1].max()/5) * 5 + 1, 5).astype(int)
+    # xticks = np.arange(np.floor(points[:, 0].min()/5) * 5, np.ceil(points[:, 0].max()/5) * 5 + 1, 5).astype(int)
+    # yticks = np.arange(np.floor(points[:, 1].min()/5) * 5, np.ceil(points[:, 1].max()/5) * 5 + 1, 5).astype(int)
     
     if show_xticks:
-        plt.xticks(xticks)
+        if xticks is not None:
+            plt.xticks(xticks)
         if not show_xticklabels:
             plt.gca().set_xticklabels([])
     else:
         plt.xticks([])
     if show_yticks:
-        plt.yticks(yticks)
+        if yticks is not None:
+            plt.yticks(yticks)
         if not show_yticklabels:
             plt.gca().set_yticklabels([])
     else:
@@ -317,9 +324,15 @@ def sublevel_set_visualization(
     plt.grid(ls="--", zorder=0)
     plt.tick_params(axis='both', which='major', labelsize=20)
     if show_xlabel:
-        plt.xlabel("Longitude", fontsize=20)
+        if xlabel is not None:
+            plt.xlabel(xlabel, fontsize=20)
+        else:
+            plt.xlabel("x", fontsize=20)
     if show_ylabel:
-        plt.ylabel("Latitude", fontsize=20)
+        if ylabel is not None:
+            plt.ylabel(ylabel, fontsize=20)
+        else:
+            plt.ylabel("y", fontsize=20)
     if save_fig:
         os.makedirs(save_fig_dir, exist_ok=True)
         plt.savefig(f"{save_fig_dir}/{save_fig_name}.png", bbox_inches="tight")
@@ -335,10 +348,16 @@ def plot_attracting_basin(
     bad_cluster_key="bad", 
     eps_threshold=0, 
     background=None, 
+    figsize=(10, 10),
     fontsize = 14,
     pointsize = 20,
+    circ_scale = 10,
     xlim=None, 
     ylim=None,
+    xlabel = None,
+    ylabel = None,
+    xticks = None,
+    yticks = None,
     show_legend=True,
     show_label=True,
     show_ticks=True,
@@ -355,7 +374,7 @@ def plot_attracting_basin(
     else:
         points = adata.obsm[plot_key][:, :2]
 
-    fig, ax = plt.subplots(figsize=(10, 10))
+    fig, ax = plt.subplots(figsize=figsize)
     # Plot background map using the global 'world' GeoDataFrame
     if background is not None:
         background.plot(ax=ax, color='lightgray', zorder=0)
@@ -368,86 +387,87 @@ def plot_attracting_basin(
     # Highlight 'good' cluster points where epsilon is below the threshold
     good_mask = adata.obs[f'{eps_key}_{good_cluster_key}'] <= eps_threshold
     good_basin = ax.scatter(points[good_mask][:,0], points[good_mask][:,1], 
-               color="red", s=pointsize, linewidths=1.5, zorder=20)
-
-    # Highlight 'bad' cluster points where epsilon is below the negative threshold
-    bad_mask = adata.obs[f'{eps_key}_{bad_cluster_key}'] <= -eps_threshold
-    bad_basin = ax.scatter(points[bad_mask][:,0], points[bad_mask][:,1], 
-               color="blue", s=pointsize, linewidths=1.5, zorder=20)
-
-    # Highlight 'good' cluster points where epsilon is below the threshold
-    good_mask2 = adata.obs[cluster_key] == good_cluster_key
-    good_cluster = ax.scatter(points[good_mask2][:,0], points[good_mask2][:,1], 
                color="red", s=pointsize, linewidths=1.5, zorder=20, label=rf"{label_basins[0]}")
 
     # Highlight 'bad' cluster points where epsilon is below the negative threshold
-    bad_mask2 = adata.obs[cluster_key] == bad_cluster_key
-    bad_cluster = ax.scatter(points[bad_mask2][:,0], points[bad_mask2][:,1], 
+    bad_mask = adata.obs[f'{eps_key}_{bad_cluster_key}'] <= -eps_threshold
+    ax.scatter(points[bad_mask][:,0], points[bad_mask][:,1], 
                color="blue", s=pointsize, linewidths=1.5, zorder=20, label=rf"{label_basins[1]}")
+
+    # Highlight 'good' cluster points where epsilon is below the threshold
+    good_mask2 = adata.obs[cluster_key] == good_cluster_key
+    ax.scatter(points[good_mask2][:,0], points[good_mask2][:,1], color="r", s=pointsize, linewidths=1.5, zorder=20)
+    ax.scatter(points[good_mask2][:,0], points[good_mask2][:,1], facecolor="none", edgecolor="r", s=circ_scale*pointsize, linewidths=1.5, zorder=20, label=rf"{label_clusters[0]}")
+
+
+    # Highlight 'bad' cluster points where epsilon is below the negative threshold
+    bad_mask2 = adata.obs[cluster_key] == bad_cluster_key
+    ax.scatter(points[bad_mask2][:,0], points[bad_mask2][:,1], color="b", s=pointsize, linewidths=1.5, zorder=20)
+    ax.scatter(points[bad_mask2][:,0], points[bad_mask2][:,1], facecolor="none", edgecolor="b", s=circ_scale*pointsize, linewidths=1.5, zorder=20, label=rf"{label_clusters[1]}")
+
     # Draw dashed lines between forecast points for each ensemble member
-    members = sorted(adata.obs['Member'].unique())
+    members = sorted(adata.obs['seq_id'].unique())
     for member in members:
-        member_group = adata.obs[adata.obs['Member'] == member].sort_values('ForecastTime')
+        member_group = adata.obs[adata.obs['seq_id'] == member]#.sort_values('ForecastTime')
         indices = member_group.index.values
         ax.plot(points[indices, 0], points[indices, 1], marker='o', markersize=5,
                 color="lightgray", ls="--", lw=1, zorder=15)
 
     # Add circles to mark the last forecast point for each cluster based on cluster_key values
-    good_last = adata.obs[adata.obs[cluster_key] == good_cluster_key].groupby('Member').tail(1)
-    bad_last = adata.obs[adata.obs[cluster_key] == bad_cluster_key].groupby('Member').tail(1)
-    circ_handles = []
-    circ_handles.append(Line2D([0], [0], marker='o', color='red', markerfacecolor='none', 
-                               markeredgewidth=2.5, markersize=10, linestyle='None', label=rf"{label_clusters[0]}"))
-    circ_handles.append(Line2D([0], [0], marker='o', color='blue', markerfacecolor='none', 
-                               markeredgewidth=2.5, markersize=10, linestyle='None', label=rf"{label_clusters[1]}"))
-    for idx in good_last.index:
-        circ = mpatches.Circle((points[idx, 0], points[idx, 1]), 0.2, edgecolor='red', facecolor='none', 
-                          linewidth=2.5, zorder=20)
-        ax.add_patch(circ)
-    for idx in bad_last.index:
-        circ = mpatches.Circle((points[idx, 0], points[idx, 1]), 0.2, edgecolor='blue', facecolor='none', 
-                          linewidth=2.5, zorder=20)
-        ax.add_patch(circ)
+    good_last = adata.obs[adata.obs[cluster_key] == good_cluster_key].groupby('seq_id').tail(1)
+    bad_last = adata.obs[adata.obs[cluster_key] == bad_cluster_key].groupby('seq_id').tail(1)
 
     # Set axis limits and ticks if not provided
     if xlim is None:
         xlim = ax.get_xlim()
     if ylim is None:
         ylim = ax.get_ylim()
-    xticks = np.arange(np.floor(xlim[0] / 2) * 2, np.ceil(xlim[1] / 2) * 2 + 1, 2).astype(int)
-    yticks = np.arange(np.floor(ylim[0] / 2) * 2, np.ceil(ylim[1] / 2) * 2 + 1, 2).astype(int)
+    
+    # xticks = np.arange(np.floor(xlim[0] / ticks_delta) * ticks_delta, np.ceil(xlim[1] / ticks_delta) * ticks_delta + 1, ticks_delta).astype(int)
+    # yticks = np.arange(np.floor(ylim[0] / ticks_delta) * ticks_delta, np.ceil(ylim[1] / ticks_delta) * ticks_delta + 1, ticks_delta).astype(int)
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
 
     if show_ticks:
-        ax.set_xticks(xticks)
-        ax.set_yticks(yticks)
+        if xticks is not None:
+            ax.set_xticks(xticks)
+        if yticks is not None:
+            ax.set_yticks(yticks)
         ax.tick_params(axis='both', labelsize=fontsize)
     else:
         ax.set_xticks([])
         ax.set_yticks([])
 
     ax.grid(ls="--", zorder=0)
-
     if show_label:
-        ax.set_xlabel("Longitude", fontsize=fontsize)
-        ax.set_ylabel("Latitude", fontsize=fontsize)
+        if xlabel is not None:
+            plt.xlabel(xlabel, fontsize=20)
+        else:
+            plt.xlabel("x", fontsize=20)
+        if ylabel is not None:
+            plt.ylabel(ylabel, fontsize=20)
+        else:
+            plt.ylabel("y", fontsize=20)
+    # if show_label:
+    #     ax.set_xlabel("Longitude", fontsize=fontsize)
+    #     ax.set_ylabel("Latitude", fontsize=fontsize)
     else:
         ax.set_xticklabels([])
         ax.set_yticklabels([])
 
     if show_legend:
-        # Remove duplicate labels
-        handles, labels = ax.get_legend_handles_labels()
-        # Remove duplicate scatter labels as well
-        label_dict = OrderedDict()
-        for h, l in zip(handles, labels):
-            if l not in label_dict:
-                label_dict[l] = h
-        # Merge
-        for h in circ_handles:
-            label_dict[h.get_label()] = h
-        ax.legend(list(label_dict.values()), list(label_dict.keys()), loc="best", fontsize=fontsize)
+        ax.legend(loc="best", fontsize=fontsize)
+        # # Remove duplicate labels
+        # handles, labels = ax.get_legend_handles_labels()
+        # # Remove duplicate scatter labels as well
+        # label_dict = OrderedDict()
+        # for h, l in zip(handles, labels):
+        #     if l not in label_dict:
+        #         label_dict[l] = h
+        # # Merge
+        # # for h in circ_handles:
+        # #     label_dict[h.get_label()] = h
+        # ax.legend(list(label_dict.values()), list(label_dict.keys()), loc="best", fontsize=fontsize)
 
     if show_title:
         if title is not None:
