@@ -20,7 +20,7 @@
 
 ## Overview
 
-- Input is multiple sequence (time-series) data $(x_1^{(i)}, x_2^{(i)}, \dots, x_{n_i}^{(i)}) \in \mathbb{R}^d\ (i=1,\dots,I)$, where $i$ is a sequence index, $n_i$ is the number of samples for the $i$th sequence, and $d>0$ is the data dimension (assuming $x_{t+1}^{(i)} = F(x_{t}^{(i)})$).
+- Input is multiple sequence (time-series) data $(x_1^{(i)}, x_2^{(i)}, \dots, x_{n_i}^{(i)}) \in \mathbb{R}^d\ (i=1,\dots,I)$, where $i$ is a sequence index, $n_i$ is the number of samples for the \(i\)th sequence, and $d>0$ is the data dimension (assuming \(x_{t+1}^{(i)} = F(x_{t}^{(i)})\)).
 - Compute the $\varepsilon$-attracting basin $A_{F,\varepsilon}$, denoting the set of states from which the system governed by $F$ can be driven into the cluster $A$ by applying control with energy $\varepsilon>0$ at each time step.
 - Compute the $-\varepsilon$-attracting basin $A_{F,-\varepsilon}$, denoting the set of states in cluster $A$ from which the system governed by $F$ cannot escape even if control with energy $\varepsilon>0$ is applied at each time step.
 - Compute the $\varepsilon_\Sigma$-attracting basins $A_{F,\varepsilon_\Sigma}$ and $A_{F,-\varepsilon_\Sigma}$, denoting analogous sets when the total control energy $\varepsilon>0$ is applied over the entire sequence.
@@ -96,7 +96,7 @@ The functions expect an [AnnData](https://anndata.readthedocs.io/en/stable/) obj
 
 ## Examples
 
-* <a href="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/example_simple.ipynb" target="_blank" rel="noopener noreferrer">**example_simple.ipynb**</a>: An simple exmaple of simulation data with one bifurcation in 2-dimensional space.
+* <a href="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/example_simple.ipynb" target="_blank" rel="noopener noreferrer">**example_simple.ipynb**</a>: A simple exmaple of simulation data with one bifurcation in 2-dimensional space.
 
 <div style="text-align:left"><img style="width:100%; height: auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/example_simple.jpg"/></div>
 
