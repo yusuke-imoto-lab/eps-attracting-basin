@@ -21,9 +21,10 @@
 ## Overview
 
 - Input is multiple sequence (time-series) data $(x_1^{(i)}, x_2^{(i)}, \dots, x_{n_i}^{(i)}) \in \mathbb{R}^d\ (i=1,\dots,I)$, where $i$ is a sequence index, $n_i$ is the number of samples for the $i$ th sequence, and $d>0$ is the data dimension (assuming $x_{t+1}^{(i)} = F(x_{t}^{(i)})$ ).
-- Compute the \(\varepsilon\)-attracting basin \(A_{F,\varepsilon}\), i.e., the set of states (data) from which the system governed by \(F\) can be driven into cluster \(A\) by applying control of magnitude at most \(\varepsilon>0\) at *each time step*.
-- Compute the \(-\varepsilon\)-attracting basin \(A_{F,-\varepsilon}\), i.e., the set of states (data) in cluster \(A\) from which the system cannot escape even if control of magnitude at most \(\varepsilon>0\) is applied at *each time step*.
-- Compute the \(\varepsilon_{\Sigma}\)-attracting basins \(A_{F,\varepsilon_{\Sigma}}\) and \(A_{F,-\varepsilon_{\Sigma}}\), i.e., the analogous sets when the *total* control energy over the entire sequence is at most \(\varepsilon>0\).
+- Compute the $\varepsilon$-attracting basin $A_{F,\varepsilon}$, i.e., the set of states from which the system governed by $F$ can be driven into cluster $A$ by applying control of magnitude at most $\varepsilon>0$ at each time step.
+- Compute the $-\varepsilon$-attracting basin $A_{F,-\varepsilon}$, i.e., the set of states in cluster $A$ from which the system cannot escape even if control of magnitude at most $\varepsilon>0$ is applied at each time step.
+- Compute the $\varepsilon_{\Sigma}$-attracting basins $A_{F,\varepsilon_{\Sigma}}$ and $A_{F,-\varepsilon_{\Sigma}}$, i.e., the analogous sets when the total control energy over the entire sequence is at most $\varepsilon>0$.
+
 
 <div style="text-align:left">
   <img style="width:100%; height:auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/image_eps_attracting_basin.jpg"/>
