@@ -31,7 +31,7 @@
 </div>
 
 For more theoretical background, see
-*Filtrations Indexed by Attracting Levels and their Applications*. Yusuke Imoto, Takahito Mitsui, Keita Tokuda, and Tomoo Yokoyama. arXiv (2025).
+*Filtrations Indexed by Attracting Levels and their Applications*. Yusuke Imoto, Takahito Mitsui, Keita Tokuda, and Tomoo Yokoyama. *in preparation*.
 
 ---
 
