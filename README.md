@@ -54,10 +54,10 @@ import epsbasin
 
 ### Input Data Structure
 
-The functions expect an [AnnData](https://anndata.readthedocs.io/en/stable/) object with the following structure:
+The functions expect an [anndata](https://anndata.readthedocs.io/en/stable/) (annoted data matrix) object with the following structure:
 
 - **`.X`**  
-  A numeric data matrix (observations × features) used for computing pairwise costs if no precomputed cost matrix exists.
+  A numeric data matrix (observations/samples × features) used for computing pairwise costs if no precomputed cost matrix exists.
 
 - **`.obs`**  
   A pandas DataFrame containing at least:
@@ -70,6 +70,53 @@ The functions expect an [AnnData](https://anndata.readthedocs.io/en/stable/) obj
 - **`.obsm`** (optional)
   - **`'plot_data'`**: 2-dimensional data for 2D visualiztion plotting instead of `.X`.
 
+#### Example of input data
+
+For example, consider input data with two sequences, each having three time points \(x^{(i)}_{j}\) (\(i=1,2\), \(j=1,2,3\)), where the final point of one sequence belongs to the “good” cluster and the final point of the other belongs to the “bad” cluster, as shown below:
+
+<div style="text-align:left">
+  <img style="width:100%; height:auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/input_example.jpg"/>
+</div>
+
+
+Then, the input anndata object `adata` should be constructed by
+adara.X = $
+\begin{bmatrix}
+1 & 5 \\
+5 & 5 \\
+9 & 2 \\
+1 & 6 \\
+5 & 6 \\
+9 & 9 
+\end{bmatrix}
+$
+adata.obs =
+|index | seq_id | cluster |
+|:--------:|:--------:|:--------:|
+| 0 | 0 | other |
+| 1 | 0 | other |
+| 2 | 0 | good |
+| 3 | 1 | other |
+| 4 | 1 | other |
+| 5 | 1 | bad |
+
+```python
+import anndata
+import panadas as pd 
+
+adata = anndata.AnnData(np.array([
+    [1, 5],
+    [5, 5],
+    [9, 2],
+    [1, 6],
+    [5, 6],
+    [9, 9]
+]))
+adata.obs = pd.DataFrame({
+    "seq_id": [0, 0, 0, 1, 1, 1],
+    "cluster": ["other", "other", "good", "other", "other", "bad"]
+})
+```
 
 ---
 
