@@ -75,7 +75,7 @@ The functions expect an [anndata](https://anndata.readthedocs.io/en/stable/) (an
 For example, consider input data with two sequences, each having three time points \(x^{(i)}_{j}\) (\(i=1,2\), \(j=1,2,3\)), where the final point of one sequence belongs to the “good” cluster and the final point of the other belongs to the “bad” cluster, as shown below:
 
 <div style="text-align:left">
-  <img style="width:100%; height:auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/input_example.jpg"/>
+  <img style="width:30%; height:auto" src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/input_example.jpg"/>
 </div>
 
 
