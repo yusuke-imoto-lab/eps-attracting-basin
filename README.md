@@ -81,14 +81,17 @@ For example, consider input data with two sequences, each having three time poin
 
 Then, the input anndata object `adata` should be constructed by
 
-adara.X = $\begin{array}{cc}
-1 & 5 \\
-5 & 5 \\
-9 & 2 \\
-1 & 6 \\
-5 & 6 \\
-9 & 9 
-\end{array}$ 
+adara.X = 
+<table>
+  <tbody>
+    <tr><td>1</td><td>5</td></tr>
+    <tr><td>5</td><td>5</td></tr>
+    <tr><td>9</td><td>2</td></tr>
+    <tr><td>1</td><td>6</td></tr>
+    <tr><td>5</td><td>6</td></tr>
+    <tr><td>9</td><td>9</td></tr>
+  </tbody>
+</table>
 
 adata.obs =
 |index | seq_id | cluster |
