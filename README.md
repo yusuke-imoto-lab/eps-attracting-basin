@@ -80,7 +80,9 @@ For example, consider input data with two sequences, each having three time poin
 
 
 Then, the input anndata object `adata` should be constructed by
-adara.X = $
+
+adara.X = 
+$
 \begin{bmatrix}
 1 & 5 \\
 5 & 5 \\
@@ -89,7 +91,8 @@ adara.X = $
 5 & 6 \\
 9 & 9 
 \end{bmatrix}
-$
+$ 
+
 adata.obs =
 |index | seq_id | cluster |
 |:--------:|:--------:|:--------:|
