@@ -131,7 +131,7 @@ adata.obs = pd.DataFrame({
 
 ### $\varepsilon_\Sigma$-attracting basin
 - **Function:** `eps_sum_attracting_basin(adata, cluster_key="cluster", target_cluster_key="target_cluster", cost_matrix_key="cost_matrix", output_key="eps_sum_attracting_basin", epsilon_delta=0.01)`
-- **Description:** Compute the debut function $\underline{\varepsilon}_{\Sigma}$ $(\ast ;A) = \inf \{ \varepsilon\in\mathbb{R} \mid\,\ast\in A_{F, \varepsilon_{\Sigma}} \}$ for the target cluster $A$ (indexed by `target_cluster_key`) for input data `adata.X`. If the cost matrix has not been precomputed (no `adata.uns[cost_matrix_key]`), the Euclidean distance matrix is ​​calculated as the cost matrix.
+- **Description:** Compute the debut function $\underline{\varepsilon}_{\Sigma} (\ast;A) = \inf \{ \varepsilon\in\mathbb{R} \mid\,\ast\in A_{F, \varepsilon_{\Sigma}} \}$ for the target cluster $A$ (indexed by `target_cluster_key`) for input data `adata.X`. If the cost matrix has not been precomputed (no `adata.uns[cost_matrix_key]`), the Euclidean distance matrix is ​​calculated as the cost matrix.
 
 ###  Sublevel set visualization
 - **Function:** `sublevel_set_visualization(adata, plot_key=None, eps_key="eps_attracting_basin", target_cluster_key="good", linewidth=0.5, color_name="_$\\varepsilon$", vmin=None, vmax=None, xlim=None, ylim=None, xlabel=None, ylabel=None, xticks=None, yticks=None, show_xticks=True, show_yticks=True, show_xlabel=True, show_ylabel=True, show_colorbar=True, show_colorbar_label=True, show_xticklabels=True, show_yticklabels=True, figsize=(10,8), levels=10, area_percentile=99.5, edge_percentile=99.5, save_fig=False, save_fig_dir=".", save_fig_name="sublevel_set_visualization")`
