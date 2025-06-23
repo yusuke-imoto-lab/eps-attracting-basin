@@ -1,7 +1,7 @@
 # $\varepsilon$-Attracting Basin
 
 > Tools for computing and visualizing **$\varepsilon$-attracting basin** as introduced in
-> *Filtrations Indexed by Attracting Levels and their Applications*. Y. Imoto, T. Mitsui, K. Tokuda, and T. Yokoyama. *in preparation*.
+> *Filtrations Indexed by Attracting Levels and their Applications*. Y. Imoto and T. Yokoyama. *in preparation*.
 
 ---
 
@@ -31,7 +31,7 @@
 </div>
 
 For more theoretical background, see
-*Filtrations Indexed by Attracting Levels and their Applications*. Yusuke Imoto, Takahito Mitsui, Keita Tokuda, and Tomoo Yokoyama. *in preparation*.
+*Filtrations Indexed by Attracting Levels and their Applications*. Yusuke Imoto and Tomoo Yokoyama. *in preparation*.
 
 ---
 
