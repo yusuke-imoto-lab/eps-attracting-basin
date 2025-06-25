@@ -22,7 +22,7 @@
 
 - Inputs are 
   - multiple sequence (time-series) data $(x_1^{(i)}, x_2^{(i)}, \dots, x_{n_i}^{(i)}) \in \mathbb{R}^d\ (i=1,\dots,I)$, where $i$ is a sequence index, $n_i$ is the number of sample (length) for the $i$ th sequence, and $d>0$ is the data dimension (assuming $x_{t+1}^{(i)} = F(x_{t}^{(i)})$ ),
-  - target cluster \$A \subset \{ x_j^{(i)} \mid j=1,\dots,n_i, i=1,\dots,I \}\$.
+  - target cluster $A\subset \{ x_j^{(i)} \mid j=1,\dots,n_i, i=1,\dots,I \} $.
 - Compute 
   - the $\varepsilon$-attracting basin $A_{F,\varepsilon}$, i.e., the set of states from which the system governed by $F$ can be driven into cluster $A$ by applying control of magnitude at most $\varepsilon>0$ at each time step.
   - the $-\varepsilon$-attracting basin $A_{F,-\varepsilon}$, i.e., the set of states in cluster $A$ from which the system cannot escape even if control of magnitude at most $\varepsilon>0$ is applied at each time step.
