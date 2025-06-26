@@ -40,6 +40,16 @@ For more theoretical background, see
 
 ## Installation
 
+You can install **epsbasin** either from PyPI or directly from the GitHub repository:
+
+**From PyPI:**
+
+```bash
+pip install epsbasin
+```
+
+**From GitHub:**
+
 ```bash
 git clone https://github.com/yusuke-imoto-lab/eps-attracting-basin.git
 cd eps-attracting-basin
