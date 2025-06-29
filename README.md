@@ -144,7 +144,7 @@ adata.obs = pd.DataFrame({
 
 ### $\varepsilon_\Sigma$-attracting basin
 - **Function:** `eps_sum_attracting_basin(adata, cluster_key="cluster", target_cluster_key="target_cluster", cost_matrix_key="cost_matrix", output_key="eps_sum_attracting_basin", epsilon_delta=0.01)`
-- **Description:** Compute the debut function <img src="https://raw.githubusercontent.com/yusuke-imoto-lab/eps-attracting-basin/refs/heads/main/images/CodeCogsEqn.svg">$\underline{\varepsilon}_{\Sigma} (\ast;A) = \inf \{ \varepsilon\in\mathbb{R} \mid\,\ast\in A_{F, \varepsilon_{\Sigma}} \}$ for the target cluster $A$ (indexed by `target_cluster_key`) for input data `adata.X`. If the cost matrix has not been precomputed (no `adata.uns[cost_matrix_key]`), the Euclidean distance matrix is ​​calculated as the cost matrix.
+- **Description:** Compute the debut function <img src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/CodeCogsEqn.svg">$\underline{\varepsilon}_{\Sigma} (\ast;A) = \inf \{ \varepsilon\in\mathbb{R} \mid\,\ast\in A_{F, \varepsilon_{\Sigma}} \}$ for the target cluster $A$ (indexed by `target_cluster_key`) for input data `adata.X`. If the cost matrix has not been precomputed (no `adata.uns[cost_matrix_key]`), the Euclidean distance matrix is ​​calculated as the cost matrix.
 
 <img src="https://github.com/yusuke-imoto-lab/eps-attracting-basin/blob/main/images/CodeCogsEqn.svg">
 
