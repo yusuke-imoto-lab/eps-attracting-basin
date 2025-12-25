@@ -1,6 +1,6 @@
 [project]
 name = "epsbasin"
-version = "0.1.0"
+version = "0.2.0"
 description = "Tools for computing and visualizing ε-attracting basin"
 authors = [
     {name = "Yusuke Imoto",email = "imoto.yusuke.4e@kyoto-u.ac.jp"}
