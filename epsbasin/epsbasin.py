@@ -438,13 +438,13 @@ def plot_attracting_basin(
     # Highlight 'good' cluster points where epsilon is below the threshold
     good_mask2 = adata.obs[cluster_key] == good_cluster_key
     ax.scatter(points[good_mask2][:,0], points[good_mask2][:,1], color="r", s=pointsize, linewidths=1.5, zorder=20)
-    ax.scatter(points[good_mask2][:,0], points[good_mask2][:,1], facecolor="none", edgecolor="r", s=circ_scale*pointsize, linewidths=1.5, zorder=20, label=rf"{label_clusters[0]}")
+    ax.scatter(points[good_mask2][:,0], points[good_mask2][:,1], facecolor="none", edgecolor="r", s=circ_scale*pointsize, linewidths=2.5, zorder=20, label=rf"{label_clusters[0]}")
 
 
     # Highlight 'bad' cluster points where epsilon is below the negative threshold
     bad_mask2 = adata.obs[cluster_key] == bad_cluster_key
     ax.scatter(points[bad_mask2][:,0], points[bad_mask2][:,1], color="b", s=pointsize, linewidths=1.5, zorder=20)
-    ax.scatter(points[bad_mask2][:,0], points[bad_mask2][:,1], facecolor="none", edgecolor="b", s=circ_scale*pointsize, linewidths=1.5, zorder=20, label=rf"{label_clusters[1]}")
+    ax.scatter(points[bad_mask2][:,0], points[bad_mask2][:,1], facecolor="none", edgecolor="b", s=circ_scale*pointsize, linewidths=2.5, zorder=20, label=rf"{label_clusters[1]}")
 
     # Draw dashed lines between forecast points for each ensemble member
     members = sorted(adata.obs['seq_id'].unique())
