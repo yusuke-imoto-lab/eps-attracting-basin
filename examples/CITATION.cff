@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "eps-attracting-basin"
+authors:
+  - family-names: Imoto
+    given-names: Yusuke
+    orcid: "https://orcid.org/0000-0003-2574-4471"
+  - family-names: Yokoyama
+    given-names: Tomoo
+    orcid: "https://orcid.org/0009-0008-7238-5161"
+repository-code: "https://github.com/yusuke-imoto-lab/eps-attracting-basin"
+version: "0.2.0"
+date-released: "2026-05-11"
