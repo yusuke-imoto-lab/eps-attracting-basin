@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import TwoSlopeNorm
+from matplotlib.colors import TwoSlopeNorm, Normalize
 from matplotlib.tri import Triangulation
 from sklearn.metrics import pairwise_distances
 import matplotlib.patches as mpatches
@@ -8,6 +8,78 @@ from scipy.spatial import Delaunay
 from collections import OrderedDict
 from matplotlib.lines import Line2D
 import os
+
+
+
+def _prepare_values_for_plot(values, vmin=None, vmax=None, *, lower_percentile=1.0, upper_percentile=99.0, center_zero=False):
+    """Return a finite copy of ``values`` and finite plotting limits.
+
+    Infinite values are retained in the underlying data and are clipped only in
+    the returned plotting copy.  ``-inf`` is mapped to a finite negative cap and
+    ``+inf`` to a finite positive cap so that their signs are preserved.
+    """
+    arr = np.asarray(values, dtype=float).copy()
+    finite = arr[np.isfinite(arr)]
+
+    if finite.size == 0:
+        scale = 1.0
+        neg_cap = -scale
+        pos_cap = scale
+    else:
+        scale = float(np.nanmax(np.abs(finite)))
+        if not np.isfinite(scale) or scale == 0.0:
+            scale = 1.0
+        finite_neg = finite[finite < 0]
+        finite_pos = finite[finite > 0]
+        neg_cap = float(np.nanmin(finite_neg)) if finite_neg.size else -scale
+        pos_cap = float(np.nanmax(finite_pos)) if finite_pos.size else scale
+
+    arr[np.isneginf(arr)] = neg_cap
+    arr[np.isposinf(arr)] = pos_cap
+
+    finite_plot = arr[np.isfinite(arr)]
+    if finite_plot.size == 0:
+        finite_plot = np.array([-1.0, 1.0], dtype=float)
+
+    if vmin is None:
+        lo = float(np.nanpercentile(finite_plot, lower_percentile))
+    else:
+        lo = float(vmin)
+    if vmax is None:
+        hi = float(np.nanpercentile(finite_plot, upper_percentile))
+    else:
+        hi = float(vmax)
+
+    if not np.isfinite(lo) or not np.isfinite(hi):
+        raise ValueError('vmin and vmax must be finite for plotting.')
+    if lo > hi:
+        raise ValueError(f'vmin must not exceed vmax; got vmin={lo}, vmax={hi}.')
+
+    # Avoid singular normalization/axis ranges.
+    if lo == hi:
+        scale = max(abs(lo), 1.0)
+        pad = 1e-6 * scale
+        lo -= pad
+        hi += pad
+
+    if center_zero:
+        # TwoSlopeNorm requires vmin < 0 < vmax.  Extend a one-sided range only
+        # by a negligible amount so that zero remains the visual center.
+        scale = max(abs(lo), abs(hi), 1.0)
+        tiny = 1e-12 * scale
+        if lo >= 0.0:
+            lo = -tiny
+        if hi <= 0.0:
+            hi = tiny
+
+    return arr, lo, hi
+
+
+def _centered_plot_norm(vmin, vmax):
+    """Return a zero-centered norm when possible, otherwise a finite Normalize."""
+    if vmin < 0.0 < vmax:
+        return TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
+    return Normalize(vmin=vmin, vmax=vmax)
 
 def eps_attracting_basin(
     adata, 
@@ -88,7 +160,7 @@ def eps_attracting_basin(
         for gid in np.unique(adata.obs['seq_id'].values[remain_indices]):
             id_del = int(obs_df.iloc[remain_indices][adata.obs.iloc[remain_indices]['seq_id'] == gid]["idx_temp"].min()) - 1
             if  id_del >= 0:
-                if adata.obs['seq_id'][id_del] == gid:
+                if adata.obs['seq_id'].iloc[id_del] == gid:
                     asign_indices_del.append(id_del)
         asign_indices = np.setdiff1d(asign_indices, asign_indices_del)
         cost_submatrix = cost_mat[np.ix_(remain_indices, asign_indices)]
@@ -116,7 +188,7 @@ def eps_attracting_basin(
         for gid in np.unique(adata.obs['seq_id'].values[remain_indices]):
             id_del = int(obs_df.iloc[remain_indices][adata.obs.iloc[remain_indices]['seq_id'] == gid]["idx_temp"].min()) - 1
             if  id_del >= 0:
-                if adata.obs['seq_id'][id_del] == gid:
+                if adata.obs['seq_id'].iloc[id_del] == gid:
                     asign_indices_del.append(id_del)
         asign_indices = np.setdiff1d(asign_indices, asign_indices_del)
         cost_submatrix = cost_matrix[np.ix_(remain_indices, asign_indices)]
@@ -275,25 +347,27 @@ def sublevel_set_visualization(
     """
     Sublevel sets visualization of $\varepsilon$- or $\varepsilon_\Sigma$-attracting basin.
 
-    Parameters:
-        ...
-        area_percentile (float): Percentile threshold for triangle area outlier removal.
-        edge_percentile (float): Percentile threshold for edge length outlier removal.
+    Infinite debut values are clipped to finite display caps only for plotting;
+    the values stored in ``adata.obs`` are not modified.
     """
-    # Get coordinates
     if plot_key is None:
         points = adata.X[:, :2]
     else:
         points = adata.obsm[plot_key][:, :2]
-    # Get values for coloring
-    colors = adata.obs[f"{eps_key}_{target_cluster_key}"].values.copy()
-    # colors[np.isinf(colors)] = np.nan
-    colors[np.isinf(colors)] = np.nanmax(colors[~np.isinf(colors)])
-    # Delaunay triangulation
+
+    raw_colors = np.asarray(adata.obs[f"{eps_key}_{target_cluster_key}"], dtype=float)
+    colors, vmin_plot, vmax_plot = _prepare_values_for_plot(
+        raw_colors,
+        vmin=vmin,
+        vmax=vmax,
+        lower_percentile=1.0,
+        upper_percentile=99.0,
+        center_zero=True,
+    )
+
     tri = Delaunay(points)
     simplices = tri.simplices
 
-    # Remove outliers by triangle area
     tri_pts = points[simplices]
     vec1 = np.hstack([tri_pts[:, 1] - tri_pts[:, 0], np.zeros((tri_pts.shape[0], 1))])
     vec2 = np.hstack([tri_pts[:, 2] - tri_pts[:, 0], np.zeros((tri_pts.shape[0], 1))])
@@ -302,7 +376,6 @@ def sublevel_set_visualization(
     area_threshold = np.percentile(areas, area_percentile)
     mask_area = areas < area_threshold
 
-    # Remove outliers by maximum edge length
     d01 = np.linalg.norm(tri_pts[:, 0] - tri_pts[:, 1], axis=1)
     d12 = np.linalg.norm(tri_pts[:, 1] - tri_pts[:, 2], axis=1)
     d20 = np.linalg.norm(tri_pts[:, 2] - tri_pts[:, 0], axis=1)
@@ -310,40 +383,32 @@ def sublevel_set_visualization(
     edge_threshold = np.percentile(max_edge, edge_percentile)
     mask_edge = max_edge < edge_threshold
 
-    # Combine masks
     mask = mask_area & mask_edge
     filtered_simplices = simplices[mask]
-
     triang = Triangulation(points[:, 0], points[:, 1], triangles=filtered_simplices)
 
-    # Set color normalization
-    if vmin is None:
-        vmin = np.percentile(colors[colors > -np.inf], 1)
-    if vmax is None:
-        vmax = np.percentile(colors[colors < np.inf], 99)
-    
     plt.figure(figsize=figsize)
-    norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+    norm = _centered_plot_norm(vmin_plot, vmax_plot)
     sf = plt.tripcolor(triang, colors, cmap='bwr', norm=norm, alpha=1, lw=0, zorder=10)
-    plt.tricontour(points[:, 0], points[:, 1], filtered_simplices, colors,
-                   levels=levels, colors='k', norm=norm, linewidths=linewidth, zorder=20)
-    
-    cbar = None
+    if np.unique(colors[np.isfinite(colors)]).size > 1:
+        plt.tricontour(
+            points[:, 0], points[:, 1], filtered_simplices, colors,
+            levels=levels, colors='k', norm=norm, linewidths=linewidth, zorder=20
+        )
+
     if show_colorbar:
         cbar = plt.colorbar(sf)
         cbar.ax.tick_params(labelsize=20)
         if show_colorbar_label:
-            if (color_name is not None):
+            if color_name is not None:
                 cbar.set_label(color_name, fontsize=22)
-            elif (eps_key.split("_")[1]=="sum"):
+            elif len(eps_key.split("_")) > 1 and eps_key.split("_")[1] == "sum":
                 cbar.set_label(r"Debut function ($\varepsilon_\Sigma$)", fontsize=22)
             else:
                 cbar.set_label(r"Debut function ($\varepsilon$)", fontsize=22)
         else:
             cbar.set_label("")
-    # xticks = np.arange(np.floor(points[:, 0].min()/5) * 5, np.ceil(points[:, 0].max()/5) * 5 + 1, 5).astype(int)
-    # yticks = np.arange(np.floor(points[:, 1].min()/5) * 5, np.ceil(points[:, 1].max()/5) * 5 + 1, 5).astype(int)
-    
+
     if show_xticks:
         if xticks is not None:
             plt.xticks(xticks)
@@ -365,20 +430,13 @@ def sublevel_set_visualization(
     plt.grid(ls="--", zorder=0)
     plt.tick_params(axis='both', which='major', labelsize=20)
     if show_xlabel:
-        if xlabel is not None:
-            plt.xlabel(xlabel, fontsize=20)
-        else:
-            plt.xlabel("x", fontsize=20)
+        plt.xlabel(xlabel if xlabel is not None else "x", fontsize=20)
     if show_ylabel:
-        if ylabel is not None:
-            plt.ylabel(ylabel, fontsize=20)
-        else:
-            plt.ylabel("y", fontsize=20)
+        plt.ylabel(ylabel if ylabel is not None else "y", fontsize=20)
     if save_fig:
         os.makedirs(save_fig_dir, exist_ok=True)
         plt.savefig(f"{save_fig_dir}/{save_fig_name}.png", bbox_inches="tight")
     plt.show()
-
 
 def plot_attracting_basin(
     adata, 
@@ -522,61 +580,64 @@ def plot_attracting_basin(
     plt.show()
 
 def plot_debut(
-    adata, 
+    adata,
     plot_key=None,
-    eps_key="eps_attracting_basin", 
-    target_cluster_key="good", 
-    vmin = None,
-    vmax = None,
+    eps_key="eps_attracting_basin",
+    target_cluster_key="good",
+    vmin=None,
+    vmax=None,
     figsize=(9, 6),
-    fontsize = 14,
-    pointsize = 20,
-    xlim=None, 
+    fontsize=14,
+    pointsize=20,
+    xlim=None,
     ylim=None,
-    xlabel = None,
-    ylabel = None,
-    xticks = None,
-    yticks = None,
+    xlabel=None,
+    ylabel=None,
+    xticks=None,
+    yticks=None,
     show_label=True,
     show_ticks=True,
     show_title=True,
     show_cbar_legend=True,
     title=None,
 ):
+    """Plot a debut function while safely displaying +/- infinity."""
     if plot_key is None:
         points = adata.X[:, :2]
     else:
         points = adata.obsm[plot_key][:, :2]
-    
-    colors = adata.obs[f"{eps_key}_{target_cluster_key}"].values.copy()
 
-    if vmin is None:
-        vmin = np.nanmin(colors[~np.isinf(colors)])
-    if vmax is None:
-        vmax = np.nanmax(colors[~np.isinf(colors)])
-    norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+    raw_colors = np.asarray(adata.obs[f"{eps_key}_{target_cluster_key}"], dtype=float)
+    colors, vmin_plot, vmax_plot = _prepare_values_for_plot(
+        raw_colors,
+        vmin=vmin,
+        vmax=vmax,
+        lower_percentile=0.0,
+        upper_percentile=100.0,
+        center_zero=True,
+    )
+    norm = _centered_plot_norm(vmin_plot, vmax_plot)
 
-    
-    colors[np.isinf(colors)] = np.nanmax(colors[~np.isinf(colors)])
-    fig, ax = plt.subplots(figsize=figsize,constrained_layout=True)
-    sc = ax.scatter(points[:, 0], points[:, 1],
-                    c=colors,
-                    cmap='bwr', s=pointsize, edgecolor='k',norm=norm,zorder=2)
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.grid(True,ls="--",zorder=0)
+    fig, ax = plt.subplots(figsize=figsize, constrained_layout=True)
+    sc = ax.scatter(
+        points[:, 0], points[:, 1], c=colors,
+        cmap='bwr', s=pointsize, edgecolor='k', norm=norm, zorder=2
+    )
+    ax.grid(True, ls="--", zorder=0)
     cbar = plt.colorbar(sc, ax=ax)
     if show_cbar_legend:
-        if eps_key.split("_")[1] == "sum":
+        if len(eps_key.split("_")) > 1 and eps_key.split("_")[1] == "sum":
             cbar.set_label(r'Debut function values ($\varepsilon_{\Sigma}$)')
         else:
             cbar.set_label(r'Debut function values ($\varepsilon$)')
+
     if xlim is None:
         xlim = ax.get_xlim()
     if ylim is None:
         ylim = ax.get_ylim()
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
+
     if show_ticks:
         if xticks is not None:
             ax.set_xticks(xticks)
@@ -586,30 +647,26 @@ def plot_debut(
     else:
         ax.set_xticks([])
         ax.set_yticks([])
+
     if show_label:
-        if xlabel is not None:
-            plt.xlabel(xlabel, fontsize=20)
-        else:
-            plt.xlabel("x", fontsize=20)
-        if ylabel is not None:
-            plt.ylabel(ylabel, fontsize=20)
-        else:
-            plt.ylabel("y", fontsize=20)
+        ax.set_xlabel(xlabel if xlabel is not None else "x", fontsize=20)
+        ax.set_ylabel(ylabel if ylabel is not None else "y", fontsize=20)
     else:
         ax.set_xticklabels([])
-        ax.set_yticklabels([])        
+        ax.set_yticklabels([])
+
     if show_title:
-        if title is not None:
-            ax.set_title(title, fontsize=fontsize)
-        else:
-            ax.set_title(rf"Debut function (cluster={target_cluster_key})", fontsize=fontsize)
+        ax.set_title(
+            title if title is not None else rf"Debut function (cluster={target_cluster_key})",
+            fontsize=fontsize,
+        )
     plt.show()
 
 def plot_landscape(
-    adata, 
+    adata,
     plot_key=None,
-    eps_key="eps_attracting_basin", 
-    target_cluster_keys=["good","bad"], 
+    eps_key="eps_attracting_basin",
+    target_cluster_keys=["good", "bad"],
     vmin=None,
     vmax=None,
     figsize=(20, 20),
@@ -621,7 +678,7 @@ def plot_landscape(
     elev=30,
     azim=-60,
     aspect=[1, 1, 0.5],
-    xlim=None, 
+    xlim=None,
     ylim=None,
     zlim=None,
     xlabel=None,
@@ -636,26 +693,50 @@ def plot_landscape(
     show_cbar_legend=True,
     title=None,
 ):
+    """Plot the 3-D landscape, clipping infinite depths only for display."""
     if plot_key is None:
         points = adata.X[:, :2]
     else:
         points = adata.obsm[plot_key][:, :2]
-    
-    idx_good = adata.obs[f"{eps_key}_{target_cluster_keys[0]}"] < 0
-    idx_bad  = adata.obs[f"{eps_key}_{target_cluster_keys[1]}"] < 0
-    landscape_func = np.min([adata.obs[f"{eps_key}_{k_}"].values.copy() for k_ in target_cluster_keys], axis=0)
+
+    good_raw = np.asarray(adata.obs[f"{eps_key}_{target_cluster_keys[0]}"], dtype=float)
+    bad_raw = np.asarray(adata.obs[f"{eps_key}_{target_cluster_keys[1]}"], dtype=float)
+    idx_good = good_raw < 0
+    idx_bad = bad_raw < 0
+
+    landscape_raw = np.minimum(good_raw, bad_raw)
+    landscape_plot, color_vmin, color_vmax = _prepare_values_for_plot(
+        landscape_raw,
+        vmin=vmin,
+        vmax=vmax,
+        lower_percentile=0.0,
+        upper_percentile=100.0,
+        center_zero=False,
+    )
+
+    # Use one common finite cap for the z coordinates of both outcome branches.
+    selected_raw = np.concatenate([good_raw[idx_good], bad_raw[idx_bad]])
+    selected_plot, zmin_auto, zmax_auto = _prepare_values_for_plot(
+        selected_raw,
+        lower_percentile=0.0,
+        upper_percentile=100.0,
+        center_zero=False,
+    )
+    n_good = int(np.sum(idx_good))
+    good_z = selected_plot[:n_good]
+    bad_z = selected_plot[n_good:]
 
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111, projection='3d')
     sc3d_good = ax.scatter(
-        points[idx_good, 0], points[idx_good, 1], adata.obs[f"{eps_key}_{target_cluster_keys[0]}"][idx_good],
-        c=landscape_func[idx_good], cmap='Reds_r', s=pointsize, edgecolor='k',
-        vmin=vmin, vmax=vmax
+        points[idx_good, 0], points[idx_good, 1], good_z,
+        c=landscape_plot[idx_good], cmap='Reds_r', s=pointsize, edgecolor='k',
+        vmin=color_vmin, vmax=color_vmax,
     )
     sc3d_bad = ax.scatter(
-        points[idx_bad, 0], points[idx_bad, 1], adata.obs[f"{eps_key}_{target_cluster_keys[1]}"][idx_bad],
-        c=landscape_func[idx_bad], cmap='Blues_r', s=pointsize, edgecolor='k',
-        vmin=vmin, vmax=vmax
+        points[idx_bad, 0], points[idx_bad, 1], bad_z,
+        c=landscape_plot[idx_bad], cmap='Blues_r', s=pointsize, edgecolor='k',
+        vmin=color_vmin, vmax=color_vmax,
     )
 
     if xlim is None:
@@ -666,7 +747,13 @@ def plot_landscape(
     ax.set_ylim(ylim)
 
     if zlim is None:
-        zlim = (np.nanmin(landscape_func), np.nanmax(landscape_func))
+        zlim = (zmin_auto, zmax_auto)
+    if not np.all(np.isfinite(zlim)):
+        raise ValueError("zlim must be finite for plotting.")
+    if zlim[0] == zlim[1]:
+        scale = max(abs(float(zlim[0])), 1.0)
+        pad = 1e-6 * scale
+        zlim = (float(zlim[0]) - pad, float(zlim[1]) + pad)
     ax.set_zlim(zlim)
 
     ax.view_init(elev=elev, azim=azim)
@@ -675,7 +762,12 @@ def plot_landscape(
     if show_label:
         ax.set_xlabel(xlabel if xlabel is not None else "$x$", fontsize=fontsize_label)
         ax.set_ylabel(ylabel if ylabel is not None else "$y$", fontsize=fontsize_label)
-        ax.set_zlabel(r'$\varepsilon_{\Sigma}$' if eps_key.split("_")[1] == "sum" else r'$L$', fontsize=fontsize_label)
+        ax.set_zlabel(
+            r'$\varepsilon_{\Sigma}$'
+            if len(eps_key.split("_")) > 1 and eps_key.split("_")[1] == "sum"
+            else r'$L$',
+            fontsize=fontsize_label,
+        )
 
     if show_ticks:
         if xticks is not None:
@@ -690,21 +782,21 @@ def plot_landscape(
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_zticks([])
-    # Set 3D axis background planes to black
+
     pane_color = (1, 1, 1, 1.0)
     ax.xaxis.set_pane_color(pane_color)
     ax.yaxis.set_pane_color(pane_color)
     ax.zaxis.set_pane_color(pane_color)
-        
     ax.grid(True, ls="--")
+
     if show_cbar:
         cbar3d_bad = plt.colorbar(sc3d_bad, ax=ax, pad=0.01, shrink=0.1, aspect=10)
         cbar3d_good = plt.colorbar(sc3d_good, ax=ax, pad=0.1, shrink=0.1, aspect=10)
         cbar3d_bad.ax.tick_params(labelsize=fontsize_cbar)
         cbar3d_good.ax.tick_params(labelsize=fontsize_cbar)
         if show_cbar_legend:
-            cbar3d_good.set_label(r'Landscape (good)',fontsize=fontsize_cbar)
-            cbar3d_bad.set_label(r'Landscape (bad)',fontsize=fontsize_cbar)
+            cbar3d_good.set_label(r'Landscape (good)', fontsize=fontsize_cbar)
+            cbar3d_bad.set_label(r'Landscape (bad)', fontsize=fontsize_cbar)
 
     if show_title:
         ax.set_title(title if title is not None else 'Landscape', fontsize=fontsize)
@@ -715,17 +807,17 @@ def plot_landscape_surface(
     adata,
     plot_key=None,
     eps_key="eps_attracting_basin",
-    target_cluster_keys=["good","bad"], 
+    target_cluster_keys=["good", "bad"],
     linewidth=0.5,
     color_name=None,
     vmin=None,
     vmax=None,
     xlim=None,
     ylim=None,
-    xlabel = None,
-    ylabel = None,
-    xticks = None,
-    yticks = None,
+    xlabel=None,
+    ylabel=None,
+    xticks=None,
+    yticks=None,
     show_xticks=True,
     show_yticks=True,
     show_xlabel=True,
@@ -735,41 +827,39 @@ def plot_landscape_surface(
     show_xticklabels=True,
     show_yticklabels=True,
     figsize=(20, 20),
-    levels = 10,
+    levels=10,
     elev=30,
     azim=-60,
     aspect=[1, 1, 0.5],
     cmap='gist_earth',
-    pane_color = (0.4, 0.3, 0.2, 0.9),
+    pane_color=(0.4, 0.3, 0.2, 0.9),
     area_percentile=99.5,
     edge_percentile=99.5,
     save_fig=False,
     save_fig_dir=".",
-    save_fig_name="sublevel_set_visualization"
+    save_fig_name="sublevel_set_visualization",
 ):
-    """
-    Sublevel sets visualization of $\varepsilon$- or $\varepsilon_\Sigma$-attracting basin.
-
-    Parameters:
-        ...
-        area_percentile (float): Percentile threshold for triangle area outlier removal.
-        edge_percentile (float): Percentile threshold for edge length outlier removal.
-    """
-    # Get coordinates
+    """Plot a landscape surface with infinite depths clipped for display only."""
     if plot_key is None:
         points = adata.X[:, :2]
     else:
         points = adata.obsm[plot_key][:, :2]
-    # Get values for coloring
-    landscape_func = np.min([adata.obs[f"{eps_key}_{k_}"].values.copy() for k_ in target_cluster_keys], axis=0)
-    colors = landscape_func.copy()
-    # colors[np.isinf(colors)] = np.nan
-    colors[np.isinf(colors)] = np.nanmax(colors[~np.isinf(colors)])
-    # Delaunay triangulation
+
+    raw_landscape = np.minimum.reduce([
+        np.asarray(adata.obs[f"{eps_key}_{k_}"], dtype=float)
+        for k_ in target_cluster_keys
+    ])
+    colors, vmin_plot, vmax_plot = _prepare_values_for_plot(
+        raw_landscape,
+        vmin=vmin,
+        vmax=vmax,
+        lower_percentile=1.0,
+        upper_percentile=99.0,
+        center_zero=False,
+    )
+
     tri = Delaunay(points)
     simplices = tri.simplices
-
-    # Remove outliers by triangle area
     tri_pts = points[simplices]
     vec1 = np.hstack([tri_pts[:, 1] - tri_pts[:, 0], np.zeros((tri_pts.shape[0], 1))])
     vec2 = np.hstack([tri_pts[:, 2] - tri_pts[:, 0], np.zeros((tri_pts.shape[0], 1))])
@@ -778,7 +868,6 @@ def plot_landscape_surface(
     area_threshold = np.percentile(areas, area_percentile)
     mask_area = areas < area_threshold
 
-    # Remove outliers by maximum edge length
     d01 = np.linalg.norm(tri_pts[:, 0] - tri_pts[:, 1], axis=1)
     d12 = np.linalg.norm(tri_pts[:, 1] - tri_pts[:, 2], axis=1)
     d20 = np.linalg.norm(tri_pts[:, 2] - tri_pts[:, 0], axis=1)
@@ -786,32 +875,17 @@ def plot_landscape_surface(
     edge_threshold = np.percentile(max_edge, edge_percentile)
     mask_edge = max_edge < edge_threshold
 
-    # Combine masks
-    mask = mask_area & mask_edge
-    filtered_simplices = simplices[mask]
-
-    triang = Triangulation(points[:, 0], points[:, 1], triangles=filtered_simplices)
-
-    # Set color normalization
-    if vmin is None:
-        vmin = np.percentile(colors[colors > -np.inf], 1)
-    if vmax is None:
-        vmax = np.percentile(colors[colors < np.inf], 99)
-    # 3D surface plot using the triangulation and the color values as Z
-    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+    filtered_simplices = simplices[mask_area & mask_edge]
 
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111, projection='3d')
-
-    # norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
     surf = ax.plot_trisurf(
         points[:, 0], points[:, 1], colors,
         triangles=filtered_simplices,
-        cmap=cmap, vmax=vmax, vmin=vmin,
-        linewidth=linewidth, antialiased=True
+        cmap=cmap, vmax=vmax_plot, vmin=vmin_plot,
+        linewidth=linewidth, antialiased=True,
     )
 
-    # Axes settings
     if xlim is not None:
         ax.set_xlim(xlim)
     if ylim is not None:
@@ -821,9 +895,12 @@ def plot_landscape_surface(
         ax.set_xlabel(xlabel if xlabel is not None else "x", fontsize=20)
     if show_ylabel:
         ax.set_ylabel(ylabel if ylabel is not None else "y", fontsize=20)
-    ax.set_zlabel(color_name if (color_name is not None) else (r"$L_{\Sigma}$" if (eps_key.split("_")[1]=="sum") else r"$L$"), fontsize=20)
+    ax.set_zlabel(
+        color_name if color_name is not None else
+        (r"$L_{\Sigma}$" if len(eps_key.split("_")) > 1 and eps_key.split("_")[1] == "sum" else r"$L$"),
+        fontsize=20,
+    )
 
-    # Ticks visibility
     if not show_xticks:
         ax.set_xticks([])
     else:
@@ -839,17 +916,24 @@ def plot_landscape_surface(
         if not show_yticklabels:
             ax.set_yticklabels([])
 
-    # View angles from notebook variables if available
     ax.view_init(elev=elev, azim=azim)
     ax.set_box_aspect(aspect)
     ax.xaxis.set_pane_color(pane_color)
     ax.yaxis.set_pane_color(pane_color)
     ax.zaxis.set_pane_color(pane_color)
-    
+
+    if show_colorbar:
+        cbar = plt.colorbar(surf, ax=ax, pad=0.08, shrink=0.6)
+        if show_colorbar_label:
+            cbar.set_label(
+                color_name if color_name is not None else
+                (r"$L_{\Sigma}$" if len(eps_key.split("_")) > 1 and eps_key.split("_")[1] == "sum" else r"$L$")
+            )
+
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.grid(False)
     if save_fig:
         os.makedirs(save_fig_dir, exist_ok=True)
         plt.savefig(f"{save_fig_dir}/{save_fig_name}.png", bbox_inches="tight")
-    fig.subplots_adjust(left=0.0, right=0.9, bottom=0., top=0.8)
+    fig.subplots_adjust(left=0.0, right=0.9, bottom=0.0, top=0.8)
     plt.show()

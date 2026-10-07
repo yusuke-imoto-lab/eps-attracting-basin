@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cd /home/dell2023/GitHub/eps-attracting-basin && python3 - <<'PY'\nimport json\nfrom pathlib import Path\npath = Path\\('examples/test_example_simple_path_with_surface_all_fixed_validation_v2\\.ipynb'\\)\nnb = json\\.loads\\(path\\.read_text\\(\\)\\)\nfor idx, cell in enumerate\\(nb\\['cells'\\]\\):\n    if cell\\.get\\('cell_type'\\) == 'code':\n        src_lines = cell\\.get\\('source', \\[\\]\\)\n        src = ''\\.join\\(src_lines\\)\n        if '# 2\\) 2D heatmap \\+ contour maps' in src:\n            print\\('CELL', idx\\)\n            for lineno, line in enumerate\\(src_lines, 1\\):\n                print\\(f'\\{lineno:03\\}: \\{line\\.rstrip\\(\\)\\}'\\)\n            break\nPY$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
